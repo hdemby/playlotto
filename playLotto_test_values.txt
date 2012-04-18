@@ -1,0 +1,53 @@
+from playLotto import *
+
+LottoVAl("9-14-33-45-55:35") and True or False
+LottoVAl("9-14-33-45-55-35") and True or False
+LottoVAl("9 14 33 45 55 35") and True or False
+LottoVAl("9,14,33,45,55,35") and True or False
+LottoVAl("9-14-33-45-55") and True or False
+LottoVAl("9-14-33-45-55") and True or False
+LottoVAl("9-45-55-35-") and True or False
+LottoVAl("9-14-35") and True or False
+LottoVAl("9-14-") and True or False
+LottoVAl("9-14") and True or False
+LottoVAl("") and True or False
+LottoVAl("9-14:35") and True or False
+LottoVAl("9-14-33:35") and True or False
+LottoVAl("9-14-33-45:35") and True or False
+
+l1=[9,14,33,45,55,35]; l2=[9,14,33,45,55,35]; GoodPair(l1,l2)
+l1=[9,14,33,45,55,35]; l2=[14,33,45,55,35]; GoodPair(l1,l2)
+    
+play="9-22-24-40-54 : 13"; play2lst(play)
+play="12-20-21-27-29:5"; play2lst(play)
+play="9-22-24-40-54-13"; play2lst(play)
+play="9-22-24-40-54|13"; play2lst(play)
+
+list=[9,12,24,40,54,13]; lst2play(list)
+list=[9,12,24,40,54]; lst2play(list)
+list=[19,22,24,40,45,1]; lst2play(list)
+list=[19,22,24]; lst2play(list)
+list=[19,22,24,40,45,54,13]; lst2play(list)
+list=[19,22]; lst2play(list)
+
+results=[[0,0,0,0,0,0],[0,0,1,0,0,0],[1,0,1,0,0,0],[1,0,1,0,0,1],[1,0,1,0,1,0],[1,0,1,0,1,1],[1,1,1,0,1,0],[1,1,1,0,1,1],[1,1,1,1,1,0],[1,1,1,1,1,1]]
+for result in results: playval(result)
+
+play="9-14-33-45-55-35"; draw="9-14-33-45-55-35"; playChk(play,draw)
+play="9-14-33-45-55-35"; draw="9-14-33-45-55-5"; playChk(play,draw)
+play="9-14-33-45-55-35"; draw="19-24-33-5-15-3"; playChk(play,draw)
+play="9-14-33-45-55:35"; draw="19-24-33-5-15:3"; playChk(play,draw)
+play="3-5-9-45-51:5"; draw="19-24-33-5-15:35"; playChk(play,draw)
+play="3-5-9-45-51:5"; draw="19-24-33-5-15:5"; playChk(play,draw)
+
+ticket='1-12-22-32-50:39\n7-24-38-50-54:14\n1-23-39-51-56:7\n11-20-28-30-50:2\n15-32-50-52-54:28\n12-26-35-39-54:3\n16-31-39-44-52:26\n6-7-26-45-56:5\n5-20-24-26-36:3'
+draw='1-16-24-32-48:2'
+cost,playresdict=getWinners(ticket,draw)
+cost
+sorted(playresdict.keys())
+
+for tkt in playresdict.keys(): print "%16s\t%s"%(tkt,str(playresdict[tkt]))
+
+
+picks,choices=getPicks(5,56); print picks; print choices
+

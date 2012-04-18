@@ -1,11 +1,15 @@
 import re,os,math,random
 
-
-MegaMillions=(5,56,1,46)
-CashFive=(5,39,0,0)
+## lottery type,(balls,range,pball,range,cost,extra),{ <payout-rules> }
+MegaMillions=[0,(5,56,1,46,1,2),{3:7,4:150,5:250000,'pb':2,'1p':3,'2p':10,'3p':150,'4p':10000,'5p':JACKPOT}]
+PowerBall=[0,(5,59,1,35,2,3),{3:7,4:100,5:1000000,'pb':4,'1p':4,'2p':7,'3p':100,'4p':10000,'5p':JACKPOT}]
+CashFive=[0,(5,39,0,0),{2:1,3:JACKPOT*.074,4:JACKPOT*.1476,5:JACKPOT*.5471}]
+Pick4=[1,('x4',9,0,0,.5,1),{'exact':2500,'exact+':2500,'any-4a':600,'any-4e':3100,'any-6a':400,'any-6e':2900,'any-12a':200,'any-12e':2700,'any-24a':100,'any-24e':2600,'combo':2500,'combo+':5000}]
+Pick3=[1,(),{}]
 
 DEBUG=0
 
+#=====================================================================================
 ##--------------------------
 ## formatting and test
 ##--------------------------
@@ -18,7 +22,12 @@ LottoVAl=lambda a:re.compile("^((\s)?[0-9]{1,2}(\s)?-){2,4}[0-9]{1,2}(\s)?([:\|-
 #>>> LottoVAl("9 14 33 45 55 35")
 #>>> LottoVAl("9,14,33,45,55,35")
 
-
+def GoodPair(l1,l2):
+  if DEBUG: print len(l1),len(l2), type(l1),type(l2)
+  return len(l1)==len(l2) and type(l1)==type([]) and type(l2)==type([])
+#>>> l1=[9,14,33,45,55,35]; l2=[9,14,33,45,55,35]; GoodPair(l1,l2)
+#>>> l1=[9,14,33,45,55,35]; l2=[14,33,45,55,35]; GoodPair(l1,l2)
+    
 def play2lst(play):
   "convert play string to number list"
   try:
@@ -42,7 +51,6 @@ def play2lst(play):
 #>>> play="9-22-24-40-54-13"; play2lst(play)
 #>>> play="9-22-24-40-54|13"; play2lst(play)
 
-
 def lst2play(list):
   "convert list of picks in a play string"
   pb=[]
@@ -63,13 +71,6 @@ def lst2play(list):
 #>>> list=[19,22,24]; lst2play(list)
 #>>> list=[19,22,24,40,45,54,13]; lst2play(list)
 #>>> list=[19,22]; lst2play(list)
-
-def GoodPair(l1,l2):
-  if DEBUG: print len(l1),len(l2), type(l1),type(l2)
-  return len(l1)==len(l2) and type(l1)==type([]) and type(l2)==type([])
-#>>> l1=[9,14,33,45,55,35]; l2=[9,14,33,45,55,35]; GoodPair(l1,l2)
-#>>> l1=[9,14,33,45,55,35]; l2=[14,33,45,55,35]; GoodPair(l1,l2)
-    
 
 #=====================================================================================
 ##--------------------------
@@ -107,7 +108,6 @@ def playChk(play,draw):
 #>>> play="3-5-9-45-51:5"; draw="19-24-33-5-15:35"; playChk(play,draw)
 #>>> play="3-5-9-45-51:5"; draw="19-24-33-5-15:5"; playChk(play,draw)
 
-
 def genPicks(nums,selections):
   "pick 'nums' numbers from range of selections"
   picks=[]
@@ -118,7 +118,7 @@ def genPicks(nums,selections):
   return picks,choices
 #>>> picks,choices=getPicks(5,56); print picks; print choices
 
-def getTicket(game=MegaMillions,plays=5):
+def getTicket(game=MegaMillions[0],plays=5):
   "simulate a Mega-Millions lottery session"
   ticket=""
   ## num= numbers to choose, sel= range of choices; pb=play powerball; vals= 
@@ -135,9 +135,34 @@ def getTicket(game=MegaMillions,plays=5):
 #>>> ticket=getTicket(); print ticket
 #>>> draw=getTicket(plays=1); print draw
 
-#>>> ticket=getTicket(MegaMillions,3); print ticket
-#>>> draw=getTicket(plays=1); print draw
-
+def playval(result,rules={3:7,4:150,5:250000,'pb':2,'1p':3,'2p':10,'3p':150,'4p':10000,'5p':JACKPOT},pb=PB):
+  "calculate the value of a ticket result"
+  ## setting rules:
+  ## ex. MegaMillions payouts:
+  ## balls	MegaBall	prize
+  ## 5		MB		$Jackpot
+  ## 5		--		$250,000
+  ## 4		MB		$10,000
+  ## 4		--		$150
+  ## 3		MB		$150
+  ## 3		--		$7
+  ## 2		MB		$10
+  ## 1		MB		$3
+  ## 0		MB		$2
+  ## So:
+  ## {2:0,3:7,4:150,5:250,00,'pb':2,'1p':3,'2p':10,'3p':150,'4p':10,000,'5p':jackpot}
+  if pb and result[-1]:
+    if sum(result):
+      value=rules["%sp"%sum(result[:-1])]
+    else:
+      value=rules['pb']
+  elif sum(result[:-1])>2:
+    value=rules[sum(result[:-1])]
+  else:
+    value=0
+  return value
+#>>> results=[[0,0,0,0,0,0],[0,0,1,0,0,0],[1,0,1,0,0,0],[1,0,1,0,0,1],[1,0,1,0,1,0],[1,0,1,0,1,1],[1,1,1,0,1,0],[1,1,1,0,1,1],[1,1,1,1,1,0],[1,1,1,1,1,1]]
+#>>> for result in results: playval(result)
 
 ##--------------------------
 ##  simulations
@@ -161,17 +186,16 @@ def getWinners(ticket,draw):
       cost+=1
       ## check the ticket and tally wins:
       if DEBUG: print "play:",play
-      #plaset=play2lst(play)
-      #if DEBUG: print "new play",plaset
       result=playChk(play,draw)
       if result:
+        results.update({play:{'result':result,'match':sum(result[:-1]),'pb':result[-1],'value':playval(result)}})
+        if DEBUG: print "%16s\t%s"%(play,str(results))
+        wins=results['match']
+        ## DEBUG report
 	mesg1=""
-        results.update({play:result})
-        if DEBUG: print "%16s\t%s"%(play,result),
-        degree=sum(result)
-        if degree>0:
-	  if degree>1:
-	    mesg1="Winner! match %s"%degree
+        if wins>0:
+	  if wins>1:
+	    mesg1="Winner! match %s"%wins
 	  if result[-1]:
 	    mesg1+=" and ** Power Ball!! **"
 	if DEBUG: print mesg1    
@@ -180,69 +204,6 @@ def getWinners(ticket,draw):
 #>>> from playLotto import *
 #>>> ticket=getTicket(); print ticket
 #>>> draw=getTicket(plays=1); print draw
-#>>> cost,playresult=getWinners(ticket,draw); print rpt
-#>>> ticket=ticket.split("\n")
-#>>> for n in range(len(playresult.keys())): print ticket[n],playresult[ticket[n]]
+#>>> cost,playresdict=getWinners(ticket,draw)
+#>>> for tkt in playresdict.keys(): print "%16s\t%s"%(tkt,str(playresdict[tkt]))
 
-
-
-def myNumsUp(ticlst):
-  "simulate the number of lotteries it takes to hit"
-  return numtries
-
-def coldPlay(ticlst):
-  "figure out the best numbers to play by creating the best set of numbers from a random set of 4096 draws"
-  return numtries
-
- 
-def didIWin():
-  "check most recent Lotto draw against your tickets for any wins"
-  return 
-
-  
-  
-samples="""
-
->>> MegaMillions=(5,56,1,46)
->>> game=MegaMillions; print PlayLotto(game,5)
-12-30-34-46-52 : 14
-2-13-40-43-51 : 9
-3-15-20-27-31 : 30
-12-23-30-41-51 : 37
-26-41-43-44-52 : 37
-
->>> game=MegaMillions; print PlayLotto(game,5)
-10-11-18-20-30 : 11
-1-6-24-39-47 : 33
-11-17-18-19-47 : 29
-22-26-28-30-56 : 13
-13-20-33-42-52 : 11
-
->>> game=MegaMillions; print PlayLotto(game,5)
-3-20-34-45-46 : 18
-9-18-19-33-34 : 13
-7-20-33-43-50 : 31
-1-6-27-37-46 : 3
-13-21-34-52-53 : 41
-
-
->>> game=CashFive; print PlayLotto(game,5)
-
-payouts:
-MegaMillions:
-#balls,MegaBall,prize
-5,MB,$Jackpot
-5,--,$250,000
-4,MB,$10,000
-4,--,$150
-3,MB,$150
-3,--,$7
-2,MB,$10
-1,MB,$3
-0,MB,$2
-
-
-
-
-
-"""

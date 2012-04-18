@@ -1,0 +1,206 @@
+Lotto Game Engine
+
+Will play a simulated game of lotto based on:
+- game rules
+- user ticket
+
+##--------------------------
+## specifications
+##--------------------------
+
+Engine Objects:
+- play:		: a single set of numbers for a lottery entry
+- draw:		: the set of winning numbers for a lottery drawing
+- ticket:		: a collection of plays for a lottery game
+- game		: the rules and winning combinations for a lottery game
+   - balls
+   - range of valid ball values
+   - powerball
+   - range of valid bonus ball values
+   - payoutlist      (if [-1] value False)
+   - bonuspayoutlist (if [-1] value True)
+- player	: entity to record winnings, cost, record over the period played 
+- wins		: tally of winning combinations for a player; can use to calculate total winnings/cost
+
+Engine applications:
+- playChk(play,draw): > matches=[0,0,0,0,0,0]
+- playVal(matches,game): result
+- 
+
+##--------------------------
+## application data flow
+##--------------------------
+
+player----> genTicket(game,plays) -----> genPlay(plays) -----> ticket --->
+                                    |                     |
+                                    ----------<------------
+                                    
+ticket-----> chkTicket(game,ticket)-----> chkPlay(play,draw) -----> win report --->
+                                      |                        |
+                                      -----------<--------------
+                                      
+
+=====================================================================================
+##--------------------------
+## formatting and test
+##--------------------------
+
+## check format of lottery string
+## valid strings: "9-14-33[-45-55][:35]"
+##
+LottoVAl=lambda a:re.compile("^((\s)?[0-9]{1,2}(\s)?-){2,4}[0-9]{1,2}(\s)?(:(\s)?[0-9]{1,2}(\s)?)?$").match(a)
+#>>> LottoVAl("9-14-33-45-55:35")
+#>>> LottoVAl("9-14-33-45-55-35")
+#>>> LottoVAl("9 14 33 45 55 35")
+#>>> LottoVAl("9,14,33,45,55,35")
+
+
+def play2lst(play):
+  "convert play string to number list"
+  try:
+    assert LottoVAl(play), "'%s' is not a valid lotto string"%play
+    balls=play.replace(" ","")
+    balls,bonus=balls.split(":")
+    balls=balls.split("-")
+    balls+=bonus
+    return balls
+  except AssertionError:
+    print "ERROR!: '%s' is not a valid lotto string"%play
+    print "Format must be: '[n]n-[n]n-[n]n[-[n]n-[n]n][:[n]n]'"
+    return
+#>>> play="9-22-24-40-54 : 13"; play2lst(play)
+#>>> play="12-20-21-27-29:5"; play2lst(play)
+#>>> play="9-22-24-40-54-13"; play2lst(play)
+
+
+def lst2play(list):
+  "convert list of picks in a play string"
+  pb=[]
+  try:
+    if len(list)<3 or len(list)>6:
+      raise ValueError
+    elif len(list)==6:
+      list,pb=list[:5],list[5:]
+    playstr="-".join("%s"%s for s in list)
+    if pb:
+      playstr+=":%s"%pb[0]
+    return playstr
+  except ValueError:
+    print "The entered list cannot be converted to a lotery ticket: ",list
+#>>> list=[9,12,24,40,54,13]; lst2play(list)
+#>>> list=[9,12,24,40,54]; lst2play(list)
+#>>> list=[19,22,24,40,45,1]; lst2play(list)
+#>>> list=[19,22,24]; lst2play(list)
+#>>> list=[19,22,24,40,45,54,13]; lst2play(list)
+#>>> list=[19,22]; lst2play(list)
+
+  
+
+=====================================================================================
+##--------------------------
+##  game logic
+##--------------------------
+
+def playChk(play,draw):
+  "check for draw matches in play"
+  ## calculates number of matches for each draw value, 
+  ## 'bonus ball' is last value if it is used
+  play=play.split("-")
+  draw=draw.split("-")
+  result=[]
+  for each in draw:
+    matches=0
+    for pick in play:
+      if pick==each:
+        matches+=1
+    result.append(matches)
+  return result
+
+#>>> play="9-14-33-45-55-35"; draw="9-14-33-45-55-35"; playChk(play,draw)
+#>>> play="9-14-33-45-55-35"; draw="19-24-33-5-15-3"; playChk(play,draw)
+
+
+>>> sum([0, 0, 1, 0, 0, 0])
+1
+>>> sum([1, 1, 1, 1, 1, 1])
+6
+>>> [1, 1, 1, 1, 1, 1][-1]
+1
+>>> if [1, 1, 1, 1, 1, 1][-1]: print "PB winner!"
+... 
+PB winner!
+>>> if [1, 1, 1, 1, 1, 0][-1]: print "PB winner!"
+... 
+
+
+>>> ticket
+'1-21-34-41-44:41\n1-6-15-27-54:6\n2-9-21-39-50:44\n11-15-19-22-41:6\n3-5-9-45-51:5\n'
+
+
+for play in ticket.split("\n"):
+  if play:
+    result=playChk(play,draw)
+    if sum(result)>1:
+      print " *** Winner! ***",play,result,
+      if result[-1]:
+        print "... and *** Power Ball! ***"
+    else:
+      print "not a winner: ",play,result
+        
+        
+samples="""
+
+>>> MegaMillions=(5,56,1,46)
+>>> game=MegaMillions; print PlayLotto(game,5)
+12-30-34-46-52 : 14
+2-13-40-43-51 : 9
+3-15-20-27-31 : 30
+12-23-30-41-51 : 37
+26-41-43-44-52 : 37
+
+>>> game=MegaMillions; print PlayLotto(game,5)
+10-11-18-20-30 : 11
+1-6-24-39-47 : 33
+11-17-18-19-47 : 29
+22-26-28-30-56 : 13
+13-20-33-42-52 : 11
+
+>>> game=MegaMillions; print PlayLotto(game,5)
+3-20-34-45-46 : 18
+9-18-19-33-34 : 13
+7-20-33-43-50 : 31
+1-6-27-37-46 : 3
+13-21-34-52-53 : 41
+
+Good numbers to track and play:
+1-12-22-32-50:39 [0, 0, 0, 0, 1, 0]
+7-24-38-50-54:14 [1, 0, 0, 1, 0, 0]
+1-23-39-51-56:7 [1, 0, 0, 0, 1, 0]
+11-20-28-30-50:2 [0, 0, 0, 0, 0, 0]
+15-32-50-52-54:28 [0, 0, 0, 0, 0, 0]
+12-26-35-39-54:3 [0, 0, 1, 0, 1, 0]
+16-31-39-44-52:26 [0, 0, 1, 1, 0, 0]
+6-7-26-45-56:5 [1, 1, 0, 0, 0, 0]
+5-20-24-26-36:3 [0, 1, 1, 0, 0, 0]
+
+
+"""
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

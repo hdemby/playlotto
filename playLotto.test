@@ -1,0 +1,107 @@
+>>> from playLotto import *
+>>> ## verify ligitimate Lotto play format:
+>>> LottoVAl("9-14-33-45-55:35") and True or False
+True
+>>> LottoVAl("9-14-33-45-55:35") and True or False
+True
+>>> LottoVAl("9-14-33-45-55-35") and True or False
+True
+>>> LottoVAl("9 14 33 45 55 35") and True or False
+False
+>>> LottoVAl("9,14,33,45,55,35") and True or False
+False
+>>> LottoVAl("9-14-33-45-55:35") and True or False
+True
+>>> LottoVAl("9-14-33-45-55-35") and True or False
+True
+>>> LottoVAl("9 14 33 45 55 35") and True or False
+False
+>>> LottoVAl("9,14,33,45,55,35") and True or False
+False
+>>> LottoVAl("9-14-33-45-55") and True or False
+True
+>>> LottoVAl("9-14-33-45-55") and True or False
+True
+>>> LottoVAl("9-45-55-35-") and True or False
+False
+>>> LottoVAl("9-14-35") and True or False
+True
+>>> LottoVAl("9-14-") and True or False
+False
+>>> LottoVAl("9-14") and True or False
+False
+>>> LottoVAl("") and True or False
+False
+>>> LottoVAl("9-14:35") and True or False
+False
+>>> LottoVAl("9-14-33:35") and True or False
+True
+>>> LottoVAl("9-14-33-45:35") and True or False
+True
+>>> ## play/draw pair matching test:
+>>> l1=[9,14,33,45,55,35]; l2=[9,14,33,45,55,35]; GoodPair(l1,l2)
+True
+>>> l1=[9,14,33,45,55,35]; l2=[14,33,45,55,35]; GoodPair(l1,l2)
+False
+>>> ## convert play string to list test:
+>>> play="9-22-24-40-54 : 13"; play2lst(play)
+['9', '22', '24', '40', '54', '13']
+>>> play="12-20-21-27-29:5"; play2lst(play)
+['12', '20', '21', '27', '29', '5']
+>>> play="9-22-24-40-54-13"; play2lst(play)
+['9', '22', '24', '40', '54', '13']
+>>> play="9-22-24-40-54|13"; play2lst(play)
+['9', '22', '24', '40', '54', '13']
+>>> ## test list to play string conversion:
+>>> list=[9,12,24,40,54,13]; lst2play(list)
+'9-12-24-40-54:13'
+>>> list=[9,12,24,40,54]; lst2play(list)
+'9-12-24-40-54'
+>>> list=[19,22,24,40,45,1]; lst2play(list)
+'19-22-24-40-45:1'
+>>> list=[19,22,24]; lst2play(list)
+'19-22-24'
+>>> list=[19,22,24,40,45,54,13]; lst2play(list)
+The entered list cannot be converted to a lotery ticket:  [19, 22, 24, 40, 45, 54, 13]
+>>> list=[19,22]; lst2play(list)
+The entered list cannot be converted to a lotery ticket:  [19, 22]
+>>> ## test result evaluation:
+>>> results=[[0,0,0,0,0,0],[0,0,1,0,0,0],[1,0,1,0,0,0],[1,0,1,0,0,1],[1,0,1,0,1,0],[1,0,1,0,1,1],[1,1,1,0,1,0],[1,1,1,0,1,1],[1,1,1,1,1,0],[1,1,1,1,1,1]]
+>>> for result in results: playval(result)
+0
+0
+0
+10
+7
+150
+150
+10000
+250000
+61000000
+>>> ## evaluate play results for draw:
+>>> play="9-14-33-45-55-35"; draw="9-14-33-45-55-35"; playChk(play,draw)
+[1, 1, 1, 1, 1, 1]
+>>> play="9-14-33-45-55-35"; draw="9-14-33-45-55-5"; playChk(play,draw)
+[1, 1, 1, 1, 1, 0]
+>>> play="9-14-33-45-55-35"; draw="19-24-33-5-15-3"; playChk(play,draw)
+[0, 0, 1, 0, 0, 0]
+>>> play="9-14-33-45-55:35"; draw="19-24-33-5-15:3"; playChk(play,draw)
+[0, 0, 1, 0, 0, 0]
+>>> play="3-5-9-45-51:5"; draw="19-24-33-5-15:35"; playChk(play,draw)
+[0, 0, 0, 1, 0, 0]
+>>> play="3-5-9-45-51:5"; draw="19-24-33-5-15:5"; playChk(play,draw)
+[0, 0, 0, 1, 0, 1]
+>>> # evaluate a ticket for winners and calculate the cost and winnings values ticket='1-12-22-32-50:39\n7-24-38-50-54:14\n1-23-39-51-56:7\n11-20-28-30-50:2\n15-32-50-52-54:28\n12-26-35-39-54:3\n16-31-39-44-52:26\n6-7-26-45-56:5\n5-20-24-26-36:3'
+>>> draw='1-16-24-32-48:2'
+>>> cost,playresdict=getWinners(ticket,draw)
+>>> cost
+9
+>>> sorted(playresdict.keys())
+['1-12-22-32-50:39', '1-23-39-51-56:7', '11-20-28-30-50:2', '12-26-35-39-54:3', '15-32-50-52-54:28', '16-31-39-44-52:26', '5-20-24-26-36:3', '6-7-26-45-56:5', '7-24-38-50-54:14']
+>>> [playresdict[s]['result'] for s in sorted(playresdict.keys())]
+[[1, 0, 0, 1, 0, 0], [1, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 0, 0], [0, 0, 0, 1, 0, 0], [0, 1, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0]]
+
+
+
+
+
