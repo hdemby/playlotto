@@ -1,12 +1,15 @@
 import re,os,math,random
 
 ## lottery type,(balls,range,pball,range,cost,extra),{ <payout-rules> }
+JACKPOT=116000000
 MegaMillions=[0,(5,56,1,46,1,2),{3:7,4:150,5:250000,'pb':2,'1p':3,'2p':10,'3p':150,'4p':10000,'5p':JACKPOT}]
 PowerBall=[0,(5,59,1,35,2,3),{3:7,4:100,5:1000000,'pb':4,'1p':4,'2p':7,'3p':100,'4p':10000,'5p':JACKPOT}]
 CashFive=[0,(5,39,0,0),{2:1,3:JACKPOT*.074,4:JACKPOT*.1476,5:JACKPOT*.5471}]
 Pick4=[1,('x4',9,0,0,.5,1),{'exact':2500,'exact+':5000,'any-4a':600,'any-4e':3100,'any-6a':400,'any-6e':2900,'any-12a':200,'any-12e':2700,'any-24a':100,'any-24e':2600,'combo':2500,'combo+':5000}]
 Pick3=[1,('x3',9,0,0,.5,1),{'exact':250,'exact+':500,'any-3a':80,'any-3e':160,'any-6a':40,'any-6e':80,'50-50.3':80,'50/50.3e':330,'50/50.6':40,'50/50.6e':290,'combo':250,'combo+':500}]
 
+JACKPOT=116000000
+PB=1
 DEBUG=0
 
 #=====================================================================================
@@ -130,7 +133,7 @@ def getTicket(game=MegaMillions[0],plays=5):
      else:
        pb=""
      ticket+="%s%s\n"%(picks,pb)
-  return ticket
+  return ticket #> "str"
 #>>> from playLotto import *
 #>>> ticket=getTicket(); print ticket
 #>>> draw=getTicket(plays=1); print draw
@@ -206,4 +209,22 @@ def getWinners(ticket,draw):
 #>>> draw=getTicket(plays=1); print draw
 #>>> cost,playresdict=getWinners(ticket,draw)
 #>>> for tkt in playresdict.keys(): print "%16s\t%s"%(tkt,str(playresdict[tkt]))
+
+#>>> ticket="\n".join("%s"%s for s in open('mynumbers.lst','r').readlines()); print ticket
+#>>> draw=getTicket(plays=1); print draw
+#>>> cost,playresdict=getWinners(ticket,draw)
+#>>> for tkt in playresdict.keys(): print "%16s\t%s"%(tkt,str(playresdict[tkt]))
+
+
+
+
+
+
+
+
+
+
+
+
+
 
