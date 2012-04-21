@@ -1,14 +1,22 @@
-import re,os,math,random
+#!/usr/bin/env python
+"""
+playLotto.py
+
+ Engine for running Lottery simulations
+ 
+"""
+import re,os,math,random,sys
 
 ## lottery type,(balls,range,pball,range,cost,extra),{ <payout-rules> }
 JACKPOT=116000000
-MegaMillions=[0,(5,56,1,46,1,2),{3:7,4:150,5:250000,'pb':2,'1p':3,'2p':10,'3p':150,'4p':10000,'5p':JACKPOT}]
-PowerBall=[0,(5,59,1,35,2,3),{3:7,4:100,5:1000000,'pb':4,'1p':4,'2p':7,'3p':100,'4p':10000,'5p':JACKPOT}]
-CashFive=[0,(5,39,0,0),{2:1,3:JACKPOT*.074,4:JACKPOT*.1476,5:JACKPOT*.5471}]
-Pick4=[1,('x4',9,0,0,.5,1),{'exact':2500,'exact+':5000,'any-4a':600,'any-4e':3100,'any-6a':400,'any-6e':2900,'any-12a':200,'any-12e':2700,'any-24a':100,'any-24e':2600,'combo':2500,'combo+':5000}]
-Pick3=[1,('x3',9,0,0,.5,1),{'exact':250,'exact+':500,'any-3a':80,'any-3e':160,'any-6a':40,'any-6e':80,'50-50.3':80,'50/50.3e':330,'50/50.6':40,'50/50.6e':290,'combo':250,'combo+':500}]
+MegaMillions={'typ':0,'parts':[5,56,1,46,1,2],'rules':{3:7,4:150,5:250000,'pb':2,'1p':3,'2p':10,'3p':150,'4p':10000,'5p':JACKPOT}}
+PowerBall={'typ':0,'parts':[5,59,1,35,2,3],'rules':{3:7,4:100,5:1000000,'pb':4,'1p':4,'2p':7,'3p':100,'4p':10000,'5p':JACKPOT}}
+CashFive={'typ':0,'parts':[5,39,0,0,.5,1],'rules':{2:1,3:JACKPOT*.074,4:JACKPOT*.1476,5:JACKPOT*.5471}}
+Pick4={'typ':1,'parts':[4,9,0,0,.5,1],'rules':{'exact':2500,'exact+':5000,'any-4a':600,'any-4e':3100,'any-6a':400,'any-6e':2900,'any-12a':200,'any-12e':2700,'any-24a':100,'any-24e':2600,'combo':2500,'combo+':5000}}
+Pick3={'typ':1,'parts':[3,9,0,0,.5,1],'rules':{'exact':250,'exact+':500,'any-3a':80,'any-3e':160,'any-6a':40,'any-6e':80,'50-50.3':80,'50/50.3e':330,'50/50.6':40,'50/50.6e':290,'combo':250,'combo+':500}}
 
 JACKPOT=116000000
+LIMIT=100000
 PB=1
 DEBUG=0
 
@@ -19,7 +27,9 @@ DEBUG=0
 
 ## check format of lottery string
 ## valid strings: "9-14-33[-45-55][:35]"
-LottoVAl=lambda a:re.compile("^((\s)?[0-9]{1,2}(\s)?-){2,4}[0-9]{1,2}(\s)?([:\|-](\s)?[0-9]{1,2}(\s)?)?$").match(a)
+lottopatt=r"^((\s)?[0-9]{1,2}(\s)?-){2,4}[0-9]{1,2}(\s)?([:\|-](\s)?[0-9]{1,2}(\s)?)?$"
+islotto=re.compile(lottopatt)
+LottoVAl=lambda a:islotto.match(a)
 #>>> LottoVAl("9-14-33-45-55:35")
 #>>> LottoVAl("9-14-33-45-55-35")
 #>>> LottoVAl("9 14 33 45 55 35")
@@ -121,7 +131,7 @@ def genPicks(nums,selections):
   return picks,choices
 #>>> picks,choices=getPicks(5,56); print picks; print choices
 
-def getTicket(game=MegaMillions[1],plays=5):
+def getTicket(game=MegaMillions['parts'],plays=5):
   "simulate a Mega-Millions lottery session"
   ticket=""
   ## num= numbers to choose, sel= range of choices; pb=play powerball; vals= 
@@ -216,14 +226,16 @@ def getWinners(ticket,draw):
 #>>> cost,playresdict=getWinners(ticket,draw)
 #>>> for tkt in playresdict.keys(): print "%16s\t%s"%(tkt,str(playresdict[tkt]))
 
-def main(ticket,plays=10):
+def main(ticket,plays=10,game=MegaMillions['parts']):
   "play the game, get your score"
   val=0
   for n in range(10,0,-1):
-    draw=getTicket(plays=1)
+    draw=getTicket(game,plays=1)
     cost,playresdict=getWinners(ticket,draw)
-    for tkt in playresdict.keys(): print "%16s\t%s"%(tkt,str(playresdict[tkt]))
-    raw_input("hit return to play remaining %s plays"%(n-1))
+    for tkt in playresdict.keys(): 
+      if playresdict[tkt]['value']>0:
+	print "%16s\t%s"%(tkt,str(playresdict[tkt]))
+    #raw_input("hit return to play remaining %s plays"%(n-1))
     val+=sum([playresdict[s]['value'] for s in playresdict.keys()])
   cost=len(ticket.split("\n"))*10
   winnings=val
@@ -236,10 +248,20 @@ if __name__=="__main__":
     plays=sys.argv[1]
   except:
     plays=10
-  print "cost=%s\twinnings=%s"%main(ticket,plays)
+  accost=0; acwin=0
+  while acwin > -LIMIT:
+    cost,wins=main(ticket,plays);accost+=cost;acwin+=wins-cost;
+    print "cost=$%s\twinnings=$%s\ttotal cost:$%s\t  net winnings: $%s"%(cost,wins,accost,acwin)
+    if acwin > accost:
+      ans=raw_input('continue?: ')
+      if ans in ['Y','y','yes','Yes','YES']:
+	continue
+      else:
+	break
+  
 
-
-
+#>>> accost=0; acwin=0
+#>>> cost,wins=main(ticket,plays);accost+=cost;acwin+=wins-cost;print "cost=$%s\twinnings=$%s\ttotal cost:$%s\t  net winnings: $%s"%(cost,wins,accost,acwin)
 
 
 
