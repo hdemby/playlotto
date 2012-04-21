@@ -121,11 +121,11 @@ def genPicks(nums,selections):
   return picks,choices
 #>>> picks,choices=getPicks(5,56); print picks; print choices
 
-def getTicket(game=MegaMillions[0],plays=5):
+def getTicket(game=MegaMillions[1],plays=5):
   "simulate a Mega-Millions lottery session"
   ticket=""
   ## num= numbers to choose, sel= range of choices; pb=play powerball; vals= 
-  num,sel,pp,vals=game
+  num,sel,pp,vals=game[:4]
   for n in range(0,int(plays)):
      picks="%s-%s-%s-%s-%s"%tuple(sorted(genPicks(num,sel)[0]))
      if pp:
@@ -155,7 +155,7 @@ def playval(result,rules={3:7,4:150,5:250000,'pb':2,'1p':3,'2p':10,'3p':150,'4p'
   ## So:
   ## {2:0,3:7,4:150,5:250,00,'pb':2,'1p':3,'2p':10,'3p':150,'4p':10,000,'5p':jackpot}
   if pb and result[-1]:
-    if sum(result):
+    if sum(result[:-1]):
       value=rules["%sp"%sum(result[:-1])]
     else:
       value=rules['pb']
@@ -183,6 +183,7 @@ def getWinners(ticket,draw):
   cost=0
   results={}
   if DEBUG: print "========== results ====================="
+  draw=draw.strip()
   for play in ticket.strip().split("\n"):
     ## add cost of ticket to running total
     if play:
@@ -193,7 +194,7 @@ def getWinners(ticket,draw):
       if result:
         results.update({play:{'result':result,'match':sum(result[:-1]),'pb':result[-1],'value':playval(result)}})
         if DEBUG: print "%16s\t%s"%(play,str(results))
-        wins=results['match']
+        wins=results[play]['match']
         ## DEBUG report
 	mesg1=""
         if wins>0:
@@ -210,11 +211,32 @@ def getWinners(ticket,draw):
 #>>> cost,playresdict=getWinners(ticket,draw)
 #>>> for tkt in playresdict.keys(): print "%16s\t%s"%(tkt,str(playresdict[tkt]))
 
-#>>> ticket="\n".join("%s"%s for s in open('mynumbers.lst','r').readlines()); print ticket
+#>>> ticket="".join("%s"%s for s in open('mynumbers.lst','r').readlines()); print ticket
 #>>> draw=getTicket(plays=1); print draw
 #>>> cost,playresdict=getWinners(ticket,draw)
 #>>> for tkt in playresdict.keys(): print "%16s\t%s"%(tkt,str(playresdict[tkt]))
 
+def main(ticket,plays=10):
+  "play the game, get your score"
+  val=0
+  for n in range(10,0,-1):
+    draw=getTicket(plays=1)
+    cost,playresdict=getWinners(ticket,draw)
+    for tkt in playresdict.keys(): print "%16s\t%s"%(tkt,str(playresdict[tkt]))
+    raw_input("hit return to play remaining %s plays"%(n-1))
+    val+=sum([playresdict[s]['value'] for s in playresdict.keys()])
+  cost=len(ticket.split("\n"))*10
+  winnings=val
+  return cost,winnings
+  
+if __name__=="__main__":
+  "run the app"
+  ticket="".join("%s"%s for s in open('mynumbers.lst','r').readlines())
+  try:
+    plays=sys.argv[1]
+  except:
+    plays=10
+  print "cost=%s\twinnings=%s"%main(ticket,plays)
 
 
 
