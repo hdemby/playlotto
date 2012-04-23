@@ -7,9 +7,7 @@ checkTicket.py
 from playLotto import *
 import sys
 
-DEBUG=1
-
-def main(ticket,draw,game=PowerBall):
+def main(ticket,draw,game=MegaMillions):
   "play the game, get your score"
   val=0
   cost,playresdict=getWinners(ticket,draw,game)
@@ -26,10 +24,25 @@ def main(ticket,draw,game=PowerBall):
 if __name__=="__main__":
   "run application"
   print "getting ticket..."
-  ticket="".join("%s"%s for s in open("mynumbers.lst",'r').readlines())
   try:
-    draw=sys.argv[1]
+    ticket="".join("%s"%s for s in open(sys.argv[2],'r').readlines()).strip()
+  except IndexError:
+    ticket="".join("%s"%s for s in open('mynumbers.lst','r').readlines()).strip()
+  try:
+    game=eval(sys.argv[1])
+  except IndexError:  
+    game=MegaMillions
+  try:
+    price=int(sys.argv[4])
+  except IndexError:  
+    price=1
+  except:
+    print "USAGE: ./playlotto.py [game] [tktfile]"
+    sys.exit()
+  try:
+    draw=sys.argv[3]
   except IndexError:
     draw=raw_input("what are the winning numbers?: ")
-  cost,resultdict=main(ticket,draw,game=PowerBall)
+  resultdict=main(ticket,draw,game=PowerBall)
+  cost=len(ticket.split("\n")*price
   print "cost=$%s\twinnings=$%s"%(cost,resultdict,PowerBall)

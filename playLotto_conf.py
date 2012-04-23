@@ -1,7 +1,7 @@
 DEBUG=0
 
 ## game constants
-LIMIT=100000	#maximus $ loss limit
+LIMIT=10000	#maximus $ loss limit
 MPX=False	#play multiplier
 
 ##-------------------------------------------

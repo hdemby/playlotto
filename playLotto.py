@@ -190,8 +190,6 @@ def getWinners(ticket,draw,game=MegaMillions): #<-- %(multi-playTicket)s,%(draw)
     if DEBUG: print "draw",draw
     #draw=play2lst(draw)
     #if DEBUG: print "newdraw:",draw
-    cost=0
-    spend=game['parms'][4]
     results={}
     if DEBUG: print "========== results ====================="
     draw=draw.strip()
@@ -199,12 +197,11 @@ def getWinners(ticket,draw,game=MegaMillions): #<-- %(multi-playTicket)s,%(draw)
       result=playlotto(play,draw)
       if DEBUG: print result['mesg']
       results.update(result)
-      cost+=spend
     if DEBUG: print "=======================================\n"   
   except AssertionError:
-    cost=0
+    print "Huston! (you know there I'm going with this)..."
     results={}
-  return cost,results #> int,{dict}
+  return results #> int,{dict}
 #>>> from playLotto import *
 #>>> ticket=genTicket(); print ticket
 #>>> draw=genTicket(plays=1); print draw
@@ -218,9 +215,11 @@ def getWinners(ticket,draw,game=MegaMillions): #<-- %(multi-playTicket)s,%(draw)
 
 def main(ticket,draw,game=MegaMillions,price=1):
   "play the game, get your score"
+  if DEBUG: print "parms:",ticket,draw,game,price
   val=0
   for tkt in ticket.split("\n"):
-    cost,playresdict=getWinners(tkt,draw,game)
+    playresdict=getWinners(tkt,draw,game)
+    if DEBUG: print "dict: ",playresdict
     if playresdict['value']>1:
       print "%16s\t%s"%(tkt,str(playresdict))
       val+=playresdict['value']
@@ -230,23 +229,26 @@ def main(ticket,draw,game=MegaMillions,price=1):
 
 if __name__=="__main__":
   "run the app"
-  ticket="".join("%s"%s for s in open('mynumbers.lst','r').readlines())
   try:
-    plays=sys.argv[1]
+    ticket="".join("%s"%s for s in open(sys.argv[2],'r').readlines()).strip()
   except IndexError:
-    plays=10
+    ticket="".join("%s"%s for s in open('mynumbers.lst','r').readlines()).strip()
   try:
-    game=sys.argv[2]
+    game=eval(sys.argv[1])
   except IndexError:  
     game=MegaMillions
+  try:
+    price=int(sys.argv[3])
+  except IndexError:  
+    price=1
   except:
-    print "USAGE: ./playlotto.py [plays] [game]"
+    print "USAGE: ./playlotto.py [game] [tktfile]"
     sys.exit()
   accost=0; acwin=0;
   tktsplayed=0
   while acwin-accost > -LIMIT:
     draw=genTicket(plays=1)
-    cost,wins=main(ticket,draw,game);accost+=cost;acwin+=wins;
+    cost,wins=main(ticket,draw,game,price=price);accost+=cost;acwin+=wins;
     tktsplayed+=1
     print "cost=$%s\twinnings=$%s\ttotal cost:$%s\t  net winnings: $%s"%(cost,wins,accost,acwin)
     if acwin > accost:
@@ -262,3 +264,9 @@ if __name__=="__main__":
 #>>> ticket="".join("%s"%s for s in open("mynumbers.lst",'r').readlines())
 #>>> accost=0; acwin=0; plays=1;
 #>>> for play in range(plays): draw=genTicket(plays=1);print "\nDraw",draw,; cost,wins=main(ticket,draw); accost+=cost;acwin+=wins-cost; print "cost=$%s\twinnings=$%s\ttotal cost:$%s\t  net winnings: $%s"%(cost,wins,accost,acwin)
+
+#>>> ticket="".join("%s"%s for s in open("myPBticket.lst",'r').readlines()).strip()
+#>>> accost=0; acwin=0; plays=1; game=PowerBall
+#>>> for play in range(plays): draw=genTicket(plays=1,game=game);print "\nDraw",draw,; cost,wins=main(ticket,draw,price=3); accost+=cost;acwin+=wins-cost; print "cost=$%s\twinnings=$%s\ttotal cost:$%s\t  net winnings: $%s"%(cost,wins,accost,acwin)
+
+
