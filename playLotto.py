@@ -6,19 +6,7 @@ playLotto.py
  
 """
 import re,os,math,random,sys
-
-## lottery type,(balls,range,pball,range,cost,extra),{ <payout-rules> }
-JACKPOT=116000000
-MegaMillions={'typ':0,'parts':[5,56,1,46,1,2],'rules':{3:7,4:150,5:250000,'pb':2,'1p':3,'2p':10,'3p':150,'4p':10000,'5p':JACKPOT}}
-PowerBall={'typ':0,'parts':[5,59,1,35,2,3],'rules':{3:7,4:100,5:1000000,'pb':4,'1p':4,'2p':7,'3p':100,'4p':10000,'5p':JACKPOT}}
-CashFive={'typ':0,'parts':[5,39,0,0,.5,1],'rules':{2:1,3:JACKPOT*.074,4:JACKPOT*.1476,5:JACKPOT*.5471}}
-Pick4={'typ':1,'parts':[4,9,0,0,.5,1],'rules':{'exact':2500,'exact+':5000,'any-4a':600,'any-4e':3100,'any-6a':400,'any-6e':2900,'any-12a':200,'any-12e':2700,'any-24a':100,'any-24e':2600,'combo':2500,'combo+':5000}}
-Pick3={'typ':1,'parts':[3,9,0,0,.5,1],'rules':{'exact':250,'exact+':500,'any-3a':80,'any-3e':160,'any-6a':40,'any-6e':80,'50-50.3':80,'50/50.3e':330,'50/50.6':40,'50/50.6e':290,'combo':250,'combo+':500}}
-
-JACKPOT=116000000
-LIMIT=100000
-PB=1
-DEBUG=0
+from playLotto_conf import *
 
 #=====================================================================================
 ##--------------------------
@@ -35,13 +23,7 @@ LottoVAl=lambda a:islotto.match(a)
 #>>> LottoVAl("9 14 33 45 55 35")
 #>>> LottoVAl("9,14,33,45,55,35")
 
-def GoodPair(l1,l2):
-  if DEBUG: print len(l1),len(l2), type(l1),type(l2)
-  return len(l1)==len(l2) and type(l1)==type([]) and type(l2)==type([])
-#>>> l1=[9,14,33,45,55,35]; l2=[9,14,33,45,55,35]; GoodPair(l1,l2)
-#>>> l1=[9,14,33,45,55,35]; l2=[14,33,45,55,35]; GoodPair(l1,l2)
-    
-def play2lst(play):
+def play2lst(play): #<-- %s  --> [balls]
   "convert play string to number list"
   try:
     assert LottoVAl(play), "'%s' is not a valid lotto string"%play
@@ -64,7 +46,7 @@ def play2lst(play):
 #>>> play="9-22-24-40-54-13"; play2lst(play)
 #>>> play="9-22-24-40-54|13"; play2lst(play)
 
-def lst2play(list):
+def lst2play(list): #<-- [] --> %(playstr)s
   "convert list of picks in a play string"
   pb=[]
   try:
@@ -85,12 +67,13 @@ def lst2play(list):
 #>>> list=[19,22,24,40,45,54,13]; lst2play(list)
 #>>> list=[19,22]; lst2play(list)
 
-#=====================================================================================
-##--------------------------
-##  game logic
-##--------------------------
+def GoodPair(l1,l2): #<-- [],[] --> True/False
+  if DEBUG: print len(l1),len(l2), type(l1),type(l2)
+  return len(l1)==len(l2) and type(l1)==type([]) and type(l2)==type([])
+#>>> l1=[9,14,33,45,55,35]; l2=[9,14,33,45,55,35]; GoodPair(l1,l2)
+#>>> l1=[9,14,33,45,55,35]; l2=[14,33,45,55,35]; GoodPair(l1,l2)
 
-def playChk(play,draw):
+def cmprPlayDraw(play,draw): #<-- %(play)s,%(draw)s --> [result]
   "check for draw matches in play"
   ## calculates number of matches for each draw value, 
   ## 'bonus ball' is last value if it is used 
@@ -99,56 +82,26 @@ def playChk(play,draw):
   try:
     ## verify 'play' and 'draw' are equivalent in format
     assert GoodPair(play,draw),"entries are not compatible: %s, %s"%(play, draw)
-    #play=play.split("-")
-    #draw=draw.split("-")
     result=[]
-    for each in draw:
+    for each in draw[:-1]:
       matches=0
-      for pick in play:
+      for pick in play[:-1]:
         if pick==each:
           matches=1
       result.append(matches)
-    if draw[-1]==play[-1]:
-      result[-1]=1
+    result.append(play[-1] and draw[-1]==play[-1] and 1 or 0)
   except AssertionError:
     print "Bad play!",play,draw
     result=[]
   return result
-#>>> play="9-14-33-45-55-35"; draw="9-14-33-45-55-35"; playChk(play,draw)
-#>>> play="9-14-33-45-55-35"; draw="9-14-33-45-55-5"; playChk(play,draw)
-#>>> play="9-14-33-45-55-35"; draw="19-24-33-5-15-3"; playChk(play,draw)
-#>>> play="9-14-33-45-55:35"; draw="19-24-33-5-15:3"; playChk(play,draw)
-#>>> play="3-5-9-45-51:5"; draw="19-24-33-5-15:35"; playChk(play,draw)
-#>>> play="3-5-9-45-51:5"; draw="19-24-33-5-15:5"; playChk(play,draw)
+#>>> play="9-14-33-45-55-35"; draw="9-14-33-45-55-35"; cmprPlayDraw(play,draw)
+#>>> play="9-14-33-45-55-35"; draw="9-14-33-45-55-5"; cmprPlayDraw(play,draw)
+#>>> play="9-14-33-45-55-35"; draw="19-24-33-5-15-3"; cmprPlayDraw(play,draw)
+#>>> play="9-14-33-45-55:35"; draw="19-24-33-5-15:3"; cmprPlayDraw(play,draw)
+#>>> play="3-5-9-45-51:5"; draw="19-24-33-5-15:35"; cmprPlayDraw(play,draw)
+#>>> play="3-5-9-45-51:5"; draw="19-24-33-5-15:5"; cmprPlayDraw(play,draw)
 
-def genPicks(nums,selections):
-  "pick 'nums' numbers from range of selections"
-  picks=[]
-  choices=range(1,int(selections)+1)
-  for x in range(0,int(nums)):
-    pick=choices.pop(int(math.floor(random.random()*len(choices))))
-    picks.append(pick)
-  return picks,choices
-#>>> picks,choices=getPicks(5,56); print picks; print choices
-
-def getTicket(game=MegaMillions['parts'],plays=5):
-  "simulate a Mega-Millions lottery session"
-  ticket=""
-  ## num= numbers to choose, sel= range of choices; pb=play powerball; vals= 
-  num,sel,pp,vals=game[:4]
-  for n in range(0,int(plays)):
-     picks="%s-%s-%s-%s-%s"%tuple(sorted(genPicks(num,sel)[0]))
-     if pp:
-       pb=":%s"%tuple(genPicks(pp,vals)[0])
-     else:
-       pb=""
-     ticket+="%s%s\n"%(picks,pb)
-  return ticket #> "str"
-#>>> from playLotto import *
-#>>> ticket=getTicket(); print ticket
-#>>> draw=getTicket(plays=1); print draw
-
-def playval(result,rules={3:7,4:150,5:250000,'pb':2,'1p':3,'2p':10,'3p':150,'4p':10000,'5p':JACKPOT},pb=PB):
+def playval(result,rules=MegaMillions['rules']): #<-- [result],{rules} --> int
   "calculate the value of a ticket result"
   ## setting rules:
   ## ex. MegaMillions payouts:
@@ -163,13 +116,10 @@ def playval(result,rules={3:7,4:150,5:250000,'pb':2,'1p':3,'2p':10,'3p':150,'4p'
   ## 1		MB		$3
   ## 0		MB		$2
   ## So:
-  ## {2:0,3:7,4:150,5:250,00,'pb':2,'1p':3,'2p':10,'3p':150,'4p':10,000,'5p':jackpot}
-  if pb and result[-1]:
-    if sum(result[:-1]):
+  ## {2:0,3:7,4:150,5:250000,'0p':2,'1p':3,'2p':10,'3p':150,'4p':10,000,'5p':MMJACK}
+  if sum(result[:-1]) and result[-1]:
       value=rules["%sp"%sum(result[:-1])]
-    else:
-      value=rules['pb']
-  elif sum(result[:-1])>2:
+  elif sum(result[:-1])>2 and not result[-1] :
     value=rules[sum(result[:-1])]
   else:
     value=0
@@ -177,98 +127,138 @@ def playval(result,rules={3:7,4:150,5:250000,'pb':2,'1p':3,'2p':10,'3p':150,'4p'
 #>>> results=[[0,0,0,0,0,0],[0,0,1,0,0,0],[1,0,1,0,0,0],[1,0,1,0,0,1],[1,0,1,0,1,0],[1,0,1,0,1,1],[1,1,1,0,1,0],[1,1,1,0,1,1],[1,1,1,1,1,0],[1,1,1,1,1,1]]
 #>>> for result in results: playval(result)
 
-##--------------------------
-##  simulations
-##--------------------------
+def playlotto(play,draw,game=MegaMillions): #<-- %(play)s,%(draw)s,{dict} --> {result}
+  "return teh results for a single lotto play"
+  result={'result':[],'matchs':0,'pball':0,'value':0,'mesg':""}
+  ## add cost of ticket to running total
+  ## check the ticket and tally wins:
+  if DEBUG: print "play:",play
+  result['result']=cmprPlayDraw(play,draw)
+  result['matchs']=sum(result['result'][:-1])
+  result['pball']=result['result'][-1]
+  result['value']=playval(result['result'],game['rules'])
+  wins=result['matchs']
+  ## DEBUG report
+  if wins>=1 and result['pball']:
+    mesg1="$%(value)s Winner! matched %(matchs)s and ** Power Ball!! **"%result
+  elif wins>1 and not result['pball']:
+    mesg1="$%(value)s Winner! matched %(matchs)s!! **"%result
+  elif not wins and result['pball']:
+    mesg1="$%(value)s Winner! Got the powerball"%result
+  else:
+    mesg1=""
+  result.update({'mesg':mesg1})
+  if DEBUG: print result['mesg']
+  return result #> {dict}
 
-def getWinners(ticket,draw):
-  "check ticket for wins"
-  ## get the raw win data from a ticket  
-  ##
-  ##
-  if DEBUG: print "**** Draw: %s ****"%draw
-  if DEBUG: print "draw",draw
-  #draw=play2lst(draw)
-  #if DEBUG: print "newdraw:",draw
-  cost=0
-  results={}
-  if DEBUG: print "========== results ====================="
-  draw=draw.strip()
-  for play in ticket.strip().split("\n"):
-    ## add cost of ticket to running total
-    if play:
-      cost+=1
-      ## check the ticket and tally wins:
-      if DEBUG: print "play:",play
-      result=playChk(play,draw)
-      if result:
-        results.update({play:{'result':result,'match':sum(result[:-1]),'pb':result[-1],'value':playval(result)}})
-        if DEBUG: print "%16s\t%s"%(play,str(results))
-        wins=results[play]['match']
-        ## DEBUG report
-	mesg1=""
-        if wins>0:
-	  if wins>1:
-	    mesg1="Winner! match %s"%wins
-	  if result[-1]:
-	    mesg1+=" and ** Power Ball!! **"
-	if DEBUG: print mesg1    
-  if DEBUG: print "=======================================\n"    
-  return cost,results
+def genPicks(nums,selections): #<-- #,# --> [picks][remaining]
+  "elimination pick of 'nums' numbers from pool in selection range"
+  picks=[]
+  choices=range(1,int(selections)+1)
+  for x in range(0,int(nums)):
+    pick=choices.pop(int(math.floor(random.random()*len(choices))))
+    picks.append(pick)
+  return picks,choices
+#>>> picks,choices=getPicks(5,56); print picks; print choices
+
+def genTicket(game=MegaMillions,plays=5): #<-- {game},int --> %(multi-playTicket)s
+  "simulate a Mega-Millions lottery session"
+  ticket=""
+  game=game['parms']
+  ## num= numbers to choose, sel= range of choices; pb=play powerball; vals= 
+  num,sel,pp,vals=game[:4]
+  for n in range(0,int(plays)):
+     picks="%s-%s-%s-%s-%s"%tuple(sorted(genPicks(num,sel)[0]))
+     if pp:
+       pb=":%s"%tuple(genPicks(pp,vals)[0])
+     else:
+       pb=""
+     ticket+="%s%s\n"%(picks,pb)
+  return ticket #> "str"
 #>>> from playLotto import *
-#>>> ticket=getTicket(); print ticket
-#>>> draw=getTicket(plays=1); print draw
+#>>> ticket=genTicket(); print ticket
+#>>> draw=genTicket(plays=1); print draw
+
+def getWinners(ticket,draw,game=MegaMillions): #<-- %(multi-playTicket)s,%(draw)s,{game} --> int,{results}
+  "return multi-play ticket results, matches, pb, payvalue"
+  ## get the raw win data from a ticket
+  try:
+    assert type(ticket)==type(""), "ticket must be a string"
+    assert type(draw)==type(""), "draw must be type string"
+    assert type(game)==type({}), "game must be type dictionary"
+    if DEBUG: print "**** Draw: %s ****"%draw
+    if DEBUG: print "draw",draw
+    #draw=play2lst(draw)
+    #if DEBUG: print "newdraw:",draw
+    cost=0
+    spend=game['parms'][4]
+    results={}
+    if DEBUG: print "========== results ====================="
+    draw=draw.strip()
+    for play in ticket.strip().split("\n"):
+      result=playlotto(play,draw)
+      if DEBUG: print result['mesg']
+      results.update(result)
+      cost+=spend
+    if DEBUG: print "=======================================\n"   
+  except AssertionError:
+    cost=0
+    results={}
+  return cost,results #> int,{dict}
+#>>> from playLotto import *
+#>>> ticket=genTicket(); print ticket
+#>>> draw=genTicket(plays=1); print draw
 #>>> cost,playresdict=getWinners(ticket,draw)
 #>>> for tkt in playresdict.keys(): print "%16s\t%s"%(tkt,str(playresdict[tkt]))
 
 #>>> ticket="".join("%s"%s for s in open('mynumbers.lst','r').readlines()); print ticket
-#>>> draw=getTicket(plays=1); print draw
+#>>> draw=genTicket(plays=1); print draw
 #>>> cost,playresdict=getWinners(ticket,draw)
 #>>> for tkt in playresdict.keys(): print "%16s\t%s"%(tkt,str(playresdict[tkt]))
 
-def main(ticket,plays=10,game=MegaMillions['parts']):
+def main(ticket,draw,game=MegaMillions,price=1):
   "play the game, get your score"
   val=0
-  for n in range(10,0,-1):
-    draw=getTicket(game,plays=1)
-    cost,playresdict=getWinners(ticket,draw)
-    for tkt in playresdict.keys(): 
-      if playresdict[tkt]['value']>0:
-	print "%16s\t%s"%(tkt,str(playresdict[tkt]))
-    #raw_input("hit return to play remaining %s plays"%(n-1))
-    val+=sum([playresdict[s]['value'] for s in playresdict.keys()])
-  cost=len(ticket.split("\n"))*10
+  for tkt in ticket.split("\n"):
+    cost,playresdict=getWinners(tkt,draw,game)
+    if playresdict['value']>1:
+      print "%16s\t%s"%(tkt,str(playresdict))
+      val+=playresdict['value']
+  cost=price*len(ticket.split("\n"))
   winnings=val
   return cost,winnings
-  
+
 if __name__=="__main__":
   "run the app"
   ticket="".join("%s"%s for s in open('mynumbers.lst','r').readlines())
   try:
     plays=sys.argv[1]
-  except:
+  except IndexError:
     plays=10
-  accost=0; acwin=0
-  while acwin > -LIMIT:
-    cost,wins=main(ticket,plays);accost+=cost;acwin+=wins-cost;
+  try:
+    game=sys.argv[2]
+  except IndexError:  
+    game=MegaMillions
+  except:
+    print "USAGE: ./playlotto.py [plays] [game]"
+    sys.exit()
+  accost=0; acwin=0;
+  tktsplayed=0
+  while acwin-accost > -LIMIT:
+    draw=genTicket(plays=1)
+    cost,wins=main(ticket,draw,game);accost+=cost;acwin+=wins;
+    tktsplayed+=1
     print "cost=$%s\twinnings=$%s\ttotal cost:$%s\t  net winnings: $%s"%(cost,wins,accost,acwin)
     if acwin > accost:
-      ans=raw_input('continue?: ')
+      ans=raw_input("You're ahead! Continue?: ")
       if ans in ['Y','y','yes','Yes','YES']:
 	continue
       else:
+	print "Good move!"
 	break
-  
-
-#>>> accost=0; acwin=0
-#>>> cost,wins=main(ticket,plays);accost+=cost;acwin+=wins-cost;print "cost=$%s\twinnings=$%s\ttotal cost:$%s\t  net winnings: $%s"%(cost,wins,accost,acwin)
-
-
-
-
-
-
-
-
-
-
+  plays=len(ticket.split("\n"))
+  print "plays/tkt: %s: tkts played: %s spent: $%s won: $%s Net: %s"%(plays,tktsplayed,accost,acwin,(acwin-accost))
+#>>> from playLotto import *
+#>>> ticket="".join("%s"%s for s in open("mynumbers.lst",'r').readlines())
+#>>> accost=0; acwin=0; plays=1;
+#>>> for play in range(plays): draw=genTicket(plays=1);print "\nDraw",draw,; cost,wins=main(ticket,draw); accost+=cost;acwin+=wins-cost; print "cost=$%s\twinnings=$%s\ttotal cost:$%s\t  net winnings: $%s"%(cost,wins,accost,acwin)
