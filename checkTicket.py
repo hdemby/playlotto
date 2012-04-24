@@ -9,6 +9,7 @@ import sys
 
 def main(ticket,draw,game=MegaMillions):
   "play the game, get your score"
+  if DEBUG: print ticket,draw,game
   val=0
   for tkt in ticket.split("\n"):
     playresdict=getWinners(tkt,draw,game)
@@ -18,28 +19,33 @@ def main(ticket,draw,game=MegaMillions):
   winnings=val
   return winnings
 
-
 if __name__=="__main__":
   "run application"
   print "getting ticket..."
   try:
     ticket="".join("%s"%s for s in open(sys.argv[1],'r').readlines()).strip()
   except IndexError:
-    ticket="".join("%s"%s for s in open('mynumbers.lst','r').readlines()).strip()
+    ticketfile=raw_input("What ticket file?: ")
+    try:
+      ticket="".join("%s"%s for s in open(ticketfile,'r').readlines()).strip()
+    except IOError:
+      print "That file dos not exist"
+      raise ValueError
   try:
     draw=sys.argv[2]
   except IndexError:
     draw=raw_input("what are the winning numbers?: ")
   try:
     game=eval(sys.argv[3])
-  except IndexError:  
-    game=MegaMillions
+  except IndexError:
+    game=eval(raw_input("What game?: "))
+    #game=MegaMillions
   try:
     price=int(sys.argv[4])
   except IndexError:  
-    price=1
+    price=int(raw_input("cost per play?: "))
   except:
-    print "USAGE: ./playlotto.py [game] [tktfile]"
+    print "USAGE: ./checkTicket.py [<tktfile> <winning_numbers> <game> <price>]"
     sys.exit()
   print "Draw:  %s"%draw  
   winnings=main(ticket,draw,game)

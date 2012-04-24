@@ -230,23 +230,34 @@ def main(ticket,draw,game=MegaMillions,price=1):
 if __name__=="__main__":
   "run the app"
   try:
-    ticket="".join("%s"%s for s in open(sys.argv[2],'r').readlines()).strip()
+    ticket="".join("%s"%s for s in open(sys.argv[1],'r').readlines()).strip()
   except IndexError:
-    ticket="".join("%s"%s for s in open('mynumbers.lst','r').readlines()).strip()
+    ticketfile=True and raw_input("What ticket file?: ") or "mynumbers.lst"
+    try:
+      ticket="".join("%s"%s for s in open(ticketfile,'r').readlines()).strip()
+    except IOError:
+      print "That file does not exist"
+      raise ValueError
+  if DEBUG: print ticketfile
   try:
-    game=eval(sys.argv[1])
-  except IndexError:  
-    game=MegaMillions
+    game=eval(sys.argv[3])
+  except IndexError:
+    game=True and raw_input("What game?: ") or "MegaMillions"
+    game=eval(game)
+  if DEBUG: print game
   try:
-    price=int(sys.argv[3])
-  except IndexError:  
-    price=1
+    price=int(sys.argv[4])
+  except IndexError:
+    price=True and raw_input("cost per play?: ") or 1
+    price=int(price)
   except:
-    print "USAGE: ./playlotto.py [game] [tktfile]"
+    print "USAGE: ./checkTicket.py [<tktfile> <winning_numbers> <game> <price>]"
     sys.exit()
+  if DEBUG: print price
+  limit=True and raw_input("How much are you willing to loose?: ") or 1000
   accost=0; acwin=0;
   tktsplayed=0
-  while acwin-accost > -LIMIT:
+  while acwin-accost > -limit:
     draw=genTicket(plays=1)
     cost,wins=main(ticket,draw,game,price=price);accost+=cost;acwin+=wins;
     tktsplayed+=1
