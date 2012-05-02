@@ -7,15 +7,16 @@ checkTicket.py
 from playLotto import *
 import sys
 
-def main(ticket,draw,game=PowerBall['parts']):
+def main(ticket,draw,game=MegaMillions['parms']):
   "play the game, get your score"
   val=0
-  cost,playresdict=getWinners(ticket,draw)
-  for tkt in playresdict.keys(): 
-    if playresdict[tkt]['value']>0:
-      print "%16s\t%s"%(tkt,str(playresdict[tkt]))
+  for tkt in ticket.split("\n"):
+    playresdict=getWinners(tkt,draw)
+    if DEBUG: print playresdict
+    if playresdict['value']>0:
+      print "%16s\t%s"%(tkt,str(playresdict))
   #raw_input("hit return to play remaining %s plays"%(n-1))
-      val+=sum([playresdict[s]['value'] for s in playresdict.keys()])
+      val+=playresdict['value']
   cost=len(ticket.split("\n"))
   winnings=val
   return cost,winnings
@@ -24,7 +25,7 @@ def main(ticket,draw,game=PowerBall['parts']):
 if __name__=="__main__":
   "run application"
   print "getting ticket..."
-  ticket="".join("%s"%s for s in open("mynumbers.lst",'r').readlines())
+  ticket="".join("%s"%s for s in open("myMMticket.lst",'r').readlines())
   try:
     draw=sys.argv[1]
   except IndexError:
